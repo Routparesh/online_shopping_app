@@ -21,6 +21,7 @@ phases:
       - echo "$DOCKER_REGISTRY_PASSWORD" | docker login -u "$DOCKER_REGISTRY_USERNAME" --password-stdin "$DOCKER_REGISTRY_URL"
       - IMAGE_REPO_NAME="tws-online-shop-app-demo"
       - IMAGE_NAME="$DOCKER_REGISTRY_USERNAME/$IMAGE_REPO_NAME"
+      - CONTAINER_NAME="devops-ecs-cluster"  # Must match ECS container name
 
   build:
     commands:
@@ -38,12 +39,13 @@ phases:
       - echo Uploading zip file to S3 root location...
       - aws s3 cp online-shop-app.zip s3://devops-app-input-8917 # Upload zip file to the root of the bucket
       - echo Writing image definitions file...
-      - printf '{"ImageURI":"%s", "Port":8000}' $IMAGE_NAME:latest > imageDefinitions.json
+      - echo Writing imagedefinitions.json for ECS...
+      - printf '[{"name":"%s","imageUri":"%s"}]' "$CONTAINER_NAME" "$IMAGE_NAME:latest" > imagedefinitions.json
       - cat imageDefinitions.json
 
 artifacts:
   files:
-    - '**/*'
+    - imagedefinitions.json
   base-directory: '.'
   discard-paths: no
   exclude-patterns:
